@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+</head>
+
+<body>
+    <div id="chat">
+        <input type="text" id="username" placeholder="Enter please username">
+        <ul id="messages"></ul>
+        <input type="text" id="msgInput" placeholder="Enter please text">
+        <button onclick="sendMessage()">Send message</button>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3000');
+
+        socket.on('new-message', (data) => {
+            const li = document.createElement('li');
+            li.dataset.id = data.id;
+            li.innerHTML = `
+                <b>${data.username}</b>: ${data.message}
+                <div>${data.time}</div>
+                <button onclick="deleteMessage('${data.id}')">Delete</button>
+            `;
+            document.getElementById('messages').appendChild(li);
+        });
+
+        socket.on('message-deleted', (messageId) => {
+            const el = document.querySelector(`[data-id='${messageId}']`);
+            if (el) el.remove();
+        });
+
+        function sendMessage() {
+            const username = document.getElementById('username').value || 'Anonim';
+            const message = document.getElementById('msgInput').value;
+            if (!message.trim()) return;
+            socket.emit('send-message', { username, message });
+            document.getElementById('msgInput').value = '';
+        }
+
+        function deleteMessage(id) {
+            socket.emit('delete-message', id);
+        }
+    </script>
+</body>
+
+</html>
